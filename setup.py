@@ -2,9 +2,9 @@ import os
 import sys
 import textwrap
 from pathlib import Path
-
 from setuptools import setup, Extension, Command
 from setuptools.command import build_ext as _build_ext
+from subprocess import run, CalledProcessError
 
 
 curdir = Path(__file__).resolve().parent
@@ -26,6 +26,7 @@ def create_ecodes(headers=None):
         files = ["linux/input.h", "linux/input-event-codes.h", "linux/uinput.h"]
         headers = [os.path.join(path, file) for path in include_paths for file in files]
 
+    # Filtrele ve mevcut başlık dosyalarını bul
     headers = [header for header in headers if os.path.isfile(header)]
     if not headers:
         msg = """\
@@ -38,38 +39,25 @@ def create_ecodes(headers=None):
             emerge sys-kernel/linux-headers
             pacman -S kernel-headers
 
-        In case they are installed in a non-standard location, you may use
-        the '--evdev-headers' option to specify one or more colon-separated
-        paths. For example:
-
-            python setup.py \\
-              build \\
-              build_ecodes --evdev-headers path/input.h:path/input-event-codes.h \\
-              build_ext --include-dirs path/ \\
-              install
-
-        If you prefer to avoid building this package from source, then please consider
-        installing the `evdev-binary` package instead. Keep in mind that it may not be
-        fully compatible with, or support all the features of your current kernel.
+        If they are installed in a non-standard location, use the '--evdev-headers' option.
         """
-
         sys.stderr.write(textwrap.dedent(msg))
         sys.exit(1)
 
-    from subprocess import run
-
-    print("writing %s (using %s)" % (ecodes_path, " ".join(headers)))
-    with ecodes_path.open("w") as fh:
-        cmd = [sys.executable, "evdev/genecodes.py", *headers]
-        run(cmd, check=True, stdout=fh)
+    # Komutu çalıştır ve hata yönetimi ekle
+    try:
+        print(f"Writing {ecodes_path} using headers: {' '.join(headers)}")
+        with ecodes_path.open("w") as fh:
+            cmd = [sys.executable, "evdev/genecodes.py", *headers]
+            run(cmd, check=True, stdout=fh)
+    except CalledProcessError as e:
+        sys.stderr.write(f"Error during code generation: {e}\n")
+        sys.exit(1)
 
 
 class build_ecodes(Command):
-    description = "generate ecodes.c"
-
-    user_options = [
-        ("evdev-headers=", None, "colon-separated paths to input subsystem headers"),
-    ]
+    description = "Generate ecodes.c"
+    user_options = [("evdev-headers=", None, "Paths to input subsystem headers")]
 
     def initialize_options(self):
         self.evdev_headers = None
