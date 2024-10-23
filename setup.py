@@ -96,7 +96,7 @@ class build_ext(_build_ext.build_ext):
     sub_commands = [("build_ecodes", has_ecodes)] + _build_ext.build_ext.sub_commands
 
 
-cflags = ["-std=c99", "-Wno-error=declaration-after-statement"]
+cflags = ["-std=c++23", "-Wno-error=declaration-after-statement"]
 setup(
     ext_modules=[
         Extension("evdev._input", sources=["evdev/input.c"], extra_compile_args=cflags),
