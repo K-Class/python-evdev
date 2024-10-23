@@ -1,9 +1,9 @@
 pytest
 Sphinx
-sphinx-copybutton ~= 0.5.2
+sphinx-copybutton >= 0.5.2
 sphinx-rtd-theme
 ruff
-bump-my-version ~= 0.17.4
+bump-my-version >= 0.17.4
 build
 twine
 cibuildwheel
